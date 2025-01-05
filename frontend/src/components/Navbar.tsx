@@ -1,12 +1,13 @@
-import { Youtube, Menu, X } from 'lucide-react';
-import { useState } from 'react';
-import { AuthModal } from './auth/AuthModal';
-import { SignInForm } from './auth/SignInForm';
-import { SignUpForm } from './auth/SignUpForm';
-import { useAuth } from '../context/AuthContext';
+import { Youtube, Menu, X } from "lucide-react";
+import { useState } from "react";
+import { AuthModal } from "./auth/AuthModal";
+import { SignInForm } from "./auth/SignInForm";
+import { SignUpForm } from "./auth/SignUpForm";
+import { useAuth } from "../context/AuthContext";
+import nhost from "./auth/nhost";
 
 export function Navbar() {
-  const { isAuthenticated, openSignIn, openSignUp } = useAuth();
+  const { isAuthenticated, handleSignOut, openSignIn, openSignUp } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -16,13 +17,25 @@ export function Navbar() {
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-2">
               <Youtube className="h-6 w-6 text-purple-600" />
-              <span className="font-bold text-xl text-gray-800">YT Summarizer</span>
+              <span className="font-bold text-xl text-gray-800">
+                YT Summarizer
+              </span>
             </div>
-            
+
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-4">
-              <a href="#" className="text-gray-600 hover:text-purple-600 transition">About</a>
-              <a href="#" className="text-gray-600 hover:text-purple-600 transition">Contact</a>
+              <a
+                href="#"
+                className="text-gray-600 hover:text-purple-600 transition"
+              >
+                About
+              </a>
+              <a
+                href="#"
+                className="text-gray-600 hover:text-purple-600 transition"
+              >
+                Contact
+              </a>
               <div className="h-6 w-px bg-gray-200 mx-2" />
               {!isAuthenticated ? (
                 <>
@@ -41,7 +54,7 @@ export function Navbar() {
                 </>
               ) : (
                 <button
-                  onClick={() => {}} // TODO: Implement sign out
+                  onClick={handleSignOut} // TODO: Implement sign out
                   className="text-gray-600 hover:text-purple-600 transition"
                 >
                   Sign Out
@@ -92,7 +105,7 @@ export function Navbar() {
                 </>
               ) : (
                 <button
-                  onClick={() => {}} // TODO: Implement sign out
+                  onClick={handleSignOut} // TODO: Implement sign out
                   className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-purple-600 hover:bg-gray-50 transition"
                 >
                   Sign Out
