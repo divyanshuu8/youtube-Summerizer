@@ -1,5 +1,6 @@
 import { useState } from "react";
 import nhost from "./nhost";
+import toast from "react-hot-toast";
 
 type SignUpFormProps = {
   onClose: () => void;
@@ -13,7 +14,7 @@ export function SignUpForm({ onClose }: SignUpFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
     try {
@@ -23,17 +24,15 @@ export function SignUpForm({ onClose }: SignUpFormProps) {
       });
 
       if (error) {
-        console.error("Sign Up Error:", error.message);
-        alert(`Sign Up Error: ${error.message}`);
+        toast.error(`Sign Up Error: ${error.message}`);
         return;
       }
-
-      console.log("User signed up successfully!");
+      toast.success("Signup Success");
 
       onClose();
     } catch (err) {
       console.error("Unexpected error:", err);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
     }
   };
 

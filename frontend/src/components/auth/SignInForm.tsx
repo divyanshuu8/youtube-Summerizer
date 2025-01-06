@@ -1,50 +1,49 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import nhost from "./nhost";
+import toast from "react-hot-toast";
 
 type SignInFormProps = {
   onClose: () => void;
 };
 
-export function SignInForm({ onClose, handleSignIn }: SignInFormProps) {
+export function SignInForm({ onClose }: SignInFormProps) {
   const { setIsAuthenticated, openSignUp } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Check if the user is already signed in
-    const currentUser = nhost.auth.getUser();
-    if (currentUser) {
-      alert(`You are already signed in as ${currentUser.email}.`);
-      return;
-    }
+    await nhost.auth.signOut();
+    console.log("Attempting to sign in user...");
     try {
-      // Sign in the user
+      const currentUser = nhost.auth.getUser();
+      if (currentUser) {
+        toast.success(`You are already signed in as ${currentUser.email}.`);
+        return;
+      }
+
       const { error, session, user } = await nhost.auth.signIn({
         email,
         password,
       });
 
       if (error) {
-        console.error("Login failed:", error.message);
-        alert(`Login failed: ${error.message}`);
+        toast.error(`Login failed: ${error.message}`);
         return;
       }
 
-      // Store JWT token in localStorage for session persistence
       const jwtToken = session?.accessToken;
       if (jwtToken) {
         localStorage.setItem("jwtToken", jwtToken);
       }
 
-      // Update authentication state and close modal
       setIsAuthenticated(true);
-      alert(`Welcome back, ${user?.email}!`);
+      toast.success(`Login success.`);
       onClose();
     } catch (err) {
       console.error("Unexpected error:", err);
-      alert("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -97,6 +96,7 @@ export function SignInForm({ onClose, handleSignIn }: SignInFormProps) {
         >
           Sign Up
         </button>
+        
       </p>
     </form>
   );

@@ -9,6 +9,7 @@ import { AuthModal } from "../components/auth/AuthModal";
 import { SignInForm } from "../components/auth/SignInForm";
 import { SignUpForm } from "../components/auth/SignUpForm";
 import nhost from "../components/auth/nhost"; // Update path based on your project structure
+import toast from "react-hot-toast";
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -36,18 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check for JWT token in localStorage when the component mounts
   useEffect(() => {
     const checkSession = async () => {
+      console.log("Checking for session on app load...");
       const jwtToken = localStorage.getItem("jwtToken");
-      const user = await nhost.auth.getUser(); // Get the user from the current session
-      if (user) {
-        setIsAuthenticated(true); // User is authenticated
-      }
       if (jwtToken) {
-        try {
-        } catch (err) {
-          console.error("Error verifying session:", err);
-          setIsAuthenticated(false);
-          localStorage.removeItem("jwtToken"); // Clear invalid token
-        }
+        console.log("JWT token found:", jwtToken);
+        setIsAuthenticated(true);
+      } else {
+        console.log("No JWT token found. User is not authenticated.");
       }
     };
     checkSession();
@@ -65,10 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleSignOut = async () => {
     try {
-      await nhost.auth.signOut(); // Sign out from nhost
-      localStorage.removeItem("jwtToken"); // Remove JWT from localStorage
-      setIsAuthenticated(false); // Update the authentication state
-      alert("You have been logged out");
+      await nhost.auth.signOut();
+      localStorage.removeItem("jwtToken");
+      setIsAuthenticated(false);
+      toast.success("You have been logged out.");
     } catch (err) {
       console.error("Error logging out:", err);
     }
