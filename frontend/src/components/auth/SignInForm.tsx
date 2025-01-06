@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { Send } from "lucide-react";
 import nhost from "./nhost";
 import toast from "react-hot-toast";
 
@@ -10,40 +11,51 @@ type SignInFormProps = {
 export function SignInForm({ onClose }: SignInFormProps) {
   const { setIsAuthenticated, openSignUp } = useAuth();
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await nhost.auth.signOut();
-    console.log("Attempting to sign in user...");
+    setLoading(true);
+
     try {
+      // Check if user is already signed in
       const currentUser = nhost.auth.getUser();
       if (currentUser) {
         toast.success(`You are already signed in as ${currentUser.email}.`);
+        setLoading(false);
         return;
       }
 
+      // Attempt to sign in
+      console.log("Attempting to sign in user...");
       const { error, session, user } = await nhost.auth.signIn({
         email,
         password,
       });
 
+      // Handle error during sign-in
       if (error) {
         toast.error(`Login failed: ${error.message}`);
+        setLoading(false);
         return;
       }
 
+      // Store JWT token in localStorage for session persistence
       const jwtToken = session?.accessToken;
       if (jwtToken) {
         localStorage.setItem("jwtToken", jwtToken);
       }
 
+      // Update authentication state and close modal
       setIsAuthenticated(true);
       toast.success(`Login success.`);
       onClose();
     } catch (err) {
       console.error("Unexpected error:", err);
       toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false); // Ensure loading state is always reset
     }
   };
 
@@ -83,9 +95,17 @@ export function SignInForm({ onClose }: SignInFormProps) {
       </div>
       <button
         type="submit"
-        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-medium transition"
+        disabled={loading}
+        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-medium flex items-center justify-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Sign In
+        {loading ? (
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+        ) : (
+          <>
+            <Send size={18} />
+            <span>Sign In</span>
+          </>
+        )}
       </button>
       <p className="text-center text-sm text-gray-600">
         Don't have an account?{" "}
@@ -96,7 +116,6 @@ export function SignInForm({ onClose }: SignInFormProps) {
         >
           Sign Up
         </button>
-        
       </p>
     </form>
   );
