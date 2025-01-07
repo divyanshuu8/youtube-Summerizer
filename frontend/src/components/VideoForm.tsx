@@ -1,37 +1,75 @@
-import { useState } from 'react';
-import { Send } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useState } from "react";
+import { Send } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export function VideoForm() {
   const { isAuthenticated, openSignIn } = useAuth();
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [summary, setSummary] = useState('');
+  const [error, setError] = useState("");
+  const [summary, setSummary] = useState("");
+  const [title, setTitle] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [bulletPoints, setBulletPoints] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isAuthenticated) {
       openSignIn();
       return;
     }
 
-    setError('');
-    setSummary('');
-    
+    setError("");
+    setSummary("");
+    setTitle("");
+    setThumbnailUrl("");
+    setBulletPoints([]);
+
     if (!url) {
-      setError('Please enter a YouTube URL');
+      setError("Please enter a YouTube URL");
       return;
     }
 
+    // Regular expression to match YouTube URLs and extract video ID
+    const youtubeRegex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(youtubeRegex);
+
+    if (!match) {
+      setError("Please enter a valid YouTube URL");
+      return;
+    }
+
+    // Extracted YouTube video ID
+    const videoId = match[1];
+    console.log("Video ID:", videoId);
+
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setSummary('This is a placeholder summary. The actual API integration needs to be implemented.');
+
+      // Make the API request to fetch video summary data
+      const response = await fetch(
+        `http://127.0.0.1:8000/get-captions/?video_id=${videoId}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch video details");
+      }
+      const data = await response.json();
+
+      // Store the fetched data in states
+      setSummary(data.summary);
+      setTitle(data.title);
+      setThumbnailUrl(data.thumbnail_url);
+      setBulletPoints(data.bullet_points);
+      // Log the fetched data
+      console.log("Fetched data:", data);
+      console.log("Summary:", data.summary);
+      console.log("Title:", data.title);
+      console.log("Thumbnail URL:", data.thumbnail_url);
+      console.log("Bullet Points:", data.bullet_points);
     } catch (err) {
-      setError('Failed to get video summary. Please try again.');
+      setError("Failed to get video summary. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -48,8 +86,8 @@ export function VideoForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label 
-            htmlFor="url" 
+          <label
+            htmlFor="url"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             YouTube URL
@@ -92,8 +130,29 @@ export function VideoForm() {
             <h2 className="text-xl font-semibold text-gray-800 mb-3">
               Video Summary
             </h2>
+
+            {/* Thumbnail and Title Section */}
+            <div className="flex items-center space-x-4 mb-4">
+              <img
+                src={thumbnailUrl}
+                alt="Thumbnail"
+                className="w-40 h-auto rounded-lg object-cover"
+              />
+              <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+            </div>
+
+            {/* Summary and Bullet Points Section */}
             <div className="bg-gray-50 rounded-lg p-4 text-gray-700">
-              {summary}
+              <p className="mb-4">{summary}</p>
+
+              {/* Bullet Points */}
+              <ul className="list-disc pl-6 space-y-2">
+                {bulletPoints.map((point, index) => (
+                  <li key={index} className="text-gray-600">
+                    {point}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         )}
