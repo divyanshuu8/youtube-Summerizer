@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 import requests
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
@@ -33,6 +34,9 @@ if api_key is None or youtube_api_key is None:
     raise HTTPException(status_code=500, detail="API key(s) not found in environment variables.")
 
 genai.configure(api_key=api_key)
+
+# Configure logging for debugging
+logging.basicConfig(level=logging.DEBUG)
 
 def clean_response(response_text: str):
     """
@@ -98,6 +102,7 @@ def summarize_with_gemini(transcript_text: str):
             "bullet_points": cleaned_bullet_points
         }
     except Exception as e:
+        logging.error(f"Error during Gemini summarization: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error during Gemini summarization: {str(e)}")
 
 def get_video_details(video_id: str):
@@ -110,21 +115,33 @@ def get_video_details(video_id: str):
     Returns:
         dict: A dictionary containing the video title and thumbnail URL.
     """
-    url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet&id={video_id}&key={youtube_api_key}"
-    response = requests.get(url)
-    data = response.json()
+    try:
+        url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet&id={video_id}&key={youtube_api_key}"
+        response = requests.get(url)
+        data = response.json()
 
-    if 'items' in data and len(data['items']) > 0:
-        title = data['items'][0]['snippet']['title']
-        thumbnail_url = data['items'][0]['snippet']['thumbnails']['high']['url']
-        return {"title": title, "thumbnail_url": thumbnail_url}
-    else:
-        raise HTTPException(status_code=404, detail="Video not found.")
+        # Log the raw response for debugging
+        logging.debug(f"Response from YouTube API: {data}")
+
+        if response.status_code != 200:
+            logging.error(f"Error fetching YouTube video details, status code: {response.status_code}, response: {data}")
+            raise HTTPException(status_code=500, detail="Error fetching YouTube video details")
+
+        if 'items' in data and len(data['items']) > 0:
+            title = data['items'][0]['snippet']['title']
+            thumbnail_url = data['items'][0]['snippet']['thumbnails']['high']['url']
+            return {"title": title, "thumbnail_url": thumbnail_url}
+        else:
+            logging.warning(f"No video found with ID {video_id}.")
+            raise HTTPException(status_code=404, detail="Video not found.")
+    except Exception as e:
+        logging.error(f"Error fetching video details for {video_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching video details: {str(e)}")
 
 @app.get("/get-captions/")
 async def get_captions(video_id: str = Query(..., description="The YouTube video ID to fetch captions for"), language: str = "en"):
     """
-    Fetch captions for a given YouTube video, summarize them, and extract key bullet points.
+    Fetch captions for the given YouTube video, summarize them, and extract key bullet points.
 
     Args:
         video_id (str): The YouTube video ID.
@@ -136,6 +153,7 @@ async def get_captions(video_id: str = Query(..., description="The YouTube video
     try:
         # Fetch captions for the given video ID
         transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[language])
+        logging.debug(f"Transcript fetched for video {video_id}: {transcript}")
 
         # Extract the text parts and join them with spaces
         text_only = " ".join([item["text"] for item in transcript])
@@ -155,12 +173,16 @@ async def get_captions(video_id: str = Query(..., description="The YouTube video
             "bullet_points": gemini_result["bullet_points"]
         }
     except TranscriptsDisabled:
+        logging.error(f"Captions are disabled for video {video_id}.")
         raise HTTPException(status_code=404, detail="Captions are disabled for this video.")
     except NoTranscriptFound:
+        logging.error(f"No transcript found for video {video_id}.")
         raise HTTPException(status_code=404, detail="No transcript found for this video.")
     except VideoUnavailable:
+        logging.error(f"The video {video_id} is unavailable.")
         raise HTTPException(status_code=404, detail="The video is unavailable.")
     except Exception as e:
+        logging.error(f"An unexpected error occurred for video {video_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 if __name__ == "__main__":
