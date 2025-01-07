@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Query
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
 from fastapi.responses import JSONResponse
 import google.generativeai as genai
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 import requests
@@ -10,6 +11,20 @@ import requests
 load_dotenv()
 
 app = FastAPI()
+
+# List of allowed origins (your frontend URL in this case)
+origins = [
+    "http://localhost:5173",  # Allow your frontend to communicate with the API
+]
+
+# Add CORS middleware to the app
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Allows only the specified origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Initialize Gemini (or OpenAI) API key from environment variable
 api_key = os.getenv("GEMINI_API_KEY")
