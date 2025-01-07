@@ -50,7 +50,7 @@ export function VideoForm() {
 
       // Make the API request to fetch video summary data
       const response = await fetch(
-        `http://127.0.0.1:8000/get-captions/?video_id=${videoId}`
+        `https://youtube-summerizer-b0es.onrender.com/get-captions/?video_id=${videoId}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch video details");
