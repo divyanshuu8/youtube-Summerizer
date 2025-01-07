@@ -14,7 +14,7 @@ app = FastAPI()
 
 # List of allowed origins (your frontend URL in this case)
 origins = [
-    "https://yt-summarizer.netlify.app",  # Allow your frontend to communicate with the API
+    "http://localhost:5173",  # Allow your frontend to communicate with the API
 ]
 
 # Add CORS middleware to the app
