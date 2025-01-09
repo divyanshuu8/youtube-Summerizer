@@ -13,15 +13,11 @@ load_dotenv()
 
 app = FastAPI()
 
-# List of allowed origins (your frontend URL in this case)
-origins = [
-    "https://yt-summarizer.netlify.app",  # Allow your frontend to communicate with the API
-]
 
 # Add CORS middleware to the app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Allows only the specified origins
+    allow_origins=["*"],  # Allows all origins
     allow_credentials=True,
     allow_methods=["*"],  # Allows all HTTP methods
     allow_headers=["*"],  # Allows all headers
