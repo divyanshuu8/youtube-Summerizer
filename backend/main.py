@@ -121,7 +121,7 @@ def get_video_details(video_id: str):
     else:
         raise HTTPException(status_code=404, detail="Video not found.")
 
-@app.get("/captions/")
+@app.get("/captions")
 async def get_captions(video_id: str):
     try:
         # Fetch the transcript using the video_id
@@ -149,7 +149,7 @@ async def get_captions(video_id: str):
 async def read_root():
     return {"message": "Hello, World!"}
 
-@app.get("/get-captions/")
+@app.get("/get-captions")
 async def get_captions(video_id: str = Query(..., description="The YouTube video ID to fetch captions for"), language: str = "en"):
     """
     Fetch captions for a given YouTube video, summarize them, and extract key bullet points.
@@ -191,7 +191,7 @@ async def get_captions(video_id: str = Query(..., description="The YouTube video
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
-@app.get("/get-captions-simple/")
+@app.get("/get-captions-simple")
 async def get_captions_simple(video_id: str = Query(..., description="The YouTube video ID to fetch captions for"), language: str = "en"):
     """
     Fetch captions for a given YouTube video, summarize them, and extract key bullet points.
