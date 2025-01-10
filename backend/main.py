@@ -134,7 +134,7 @@ def get_video_details(video_id: str):
         logging.error(f"Error fetching video details for {video_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching video details: {str(e)}")
 
-@app.get("/get-captions/")
+@app.post("/get-captions/")
 async def get_captions(video_id: str = Query(..., description="The YouTube video ID to fetch captions for"), language: str = "en"):
     """
     Fetch captions for the given YouTube video, summarize them, and extract key bullet points.

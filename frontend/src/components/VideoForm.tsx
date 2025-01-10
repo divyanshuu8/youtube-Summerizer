@@ -50,7 +50,10 @@ export function VideoForm() {
 
       // Make the API request to fetch video summary data
       const response = await fetch(
-        `https:/d/get-captions/?video_id=${videoId}`
+        `https://youtube-summerizer-lukd.onrender.com/get-captions/?video_id=${videoId}`,
+        {
+          method: "POST",
+        }
       );
       if (!response.ok) {
         throw new Error("Failed to fetch video details");
@@ -69,6 +72,7 @@ export function VideoForm() {
       console.log("Thumbnail URL:", data.thumbnail_url);
       console.log("Bullet Points:", data.bullet_points);
     } catch (err) {
+      console.log(err);
       setError("Failed to get video summary. Please try again.");
     } finally {
       setLoading(false);
