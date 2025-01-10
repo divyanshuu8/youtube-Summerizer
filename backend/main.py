@@ -144,6 +144,10 @@ async def get_captions(video_id: str):
     except Exception as e:
         # Catch any other exceptions and return a 500 error
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+@app.get("/")
+async def read_root():
+    return {"message": "Hello, World!"}
 
 @app.get("/get-captions/")
 async def get_captions(video_id: str = Query(..., description="The YouTube video ID to fetch captions for"), language: str = "en"):
