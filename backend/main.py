@@ -121,6 +121,30 @@ def get_video_details(video_id: str):
     else:
         raise HTTPException(status_code=404, detail="Video not found.")
 
+@app.get("/captions/")
+async def get_captions(video_id: str):
+    try:
+        # Fetch the transcript using the video_id
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+
+        # Format the captions as a list of text blocks
+        captions = [entry['text'] for entry in transcript]
+
+        return {"video_id": video_id, "captions": captions}
+
+    except VideoUnavailable:
+        # Video is unavailable or doesn't exist
+        raise HTTPException(status_code=404, detail="Video is unavailable or doesn't exist.")
+    except TranscriptsDisabled:
+        # Captions are disabled for the video
+        raise HTTPException(status_code=404, detail="Captions are disabled for this video.")
+    except NoTranscriptFound:
+        # No transcript found for the video
+        raise HTTPException(status_code=404, detail="No transcript available for this video.")
+    except Exception as e:
+        # Catch any other exceptions and return a 500 error
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 @app.get("/get-captions/")
 async def get_captions(video_id: str = Query(..., description="The YouTube video ID to fetch captions for"), language: str = "en"):
     """
@@ -198,5 +222,5 @@ if __name__ == "__main__":
     import uvicorn
 
     # Use the port from the environment variable or default to 8000
-    port = int(os.getenv("PORT", 8000))
+    port = int(os.getenv("PORT", 8006))
     uvicorn.run(app, host="0.0.0.0", port=port)
