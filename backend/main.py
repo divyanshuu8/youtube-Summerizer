@@ -12,15 +12,15 @@ load_dotenv()
 
 app = FastAPI()
 
-# List of allowed origins (your frontend URL in this case)
+# List of allowed origins (allow all origins in this case)
 origins = [
-    "http://localhost:5173",  # Allow your frontend to communicate with the API
+    "*",  # Allow all origins
 ]
 
 # Add CORS middleware to the app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Allows only the specified origins
+    allow_origins=origins,  # Allows all origins
     allow_credentials=True,
     allow_methods=["*"],  # Allows all HTTP methods
     allow_headers=["*"],  # Allows all headers
@@ -163,6 +163,40 @@ async def get_captions(video_id: str = Query(..., description="The YouTube video
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
+@app.get("/get-captions-simple/")
+async def get_captions_simple(video_id: str = Query(..., description="The YouTube video ID to fetch captions for"), language: str = "en"):
+    """
+    Fetch captions for a given YouTube video, summarize them, and extract key bullet points.
+    This route does not fetch the video title or thumbnail.
+    """
+    try:
+        # Fetch captions for the given video ID
+        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[language])
+
+        # Extract the text parts and join them with spaces
+        text_only = " ".join([item["text"] for item in transcript])
+
+        # Summarize and generate bullet points
+        gemini_result = summarize_with_gemini(text_only)
+
+        return {
+            "video_id": video_id,
+            "language": language,
+            "summary": gemini_result["summary"],
+            "bullet_points": gemini_result["bullet_points"]
+        }
+    except TranscriptsDisabled:
+        raise HTTPException(status_code=404, detail="Captions are disabled for this video.")
+    except NoTranscriptFound:
+        raise HTTPException(status_code=404, detail="No transcript found for this video.")
+    except VideoUnavailable:
+        raise HTTPException(status_code=404, detail="The video is unavailable.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    # Use the port from the environment variable or default to 8000
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

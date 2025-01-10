@@ -47,7 +47,7 @@ export function VideoForm() {
 
     try {
       setLoading(true);
-
+      // https://www.youtube.com/watch?v=yfflNV_lmvE
       // Make the API request to fetch video summary data
       const response = await fetch(
         `http://127.0.0.1:8000/get-captions/?video_id=${videoId}`
